@@ -21,11 +21,16 @@ services:
     container_name: musost-frontend
     restart: unless-stopped
     ports:
-      - "3001:80"
+      - "3002:80"
+    environment:
+      - VIRTUAL_HOST=musost.ru
+      - LETSENCRYPT_HOST=musost.ru
+      - LETSENCRYPT_EMAIL=azamuray@gmail.com
     depends_on:
       - backend
     networks:
       - musost-network
+      - web-proxy
 
   db:
     image: postgres:15
@@ -51,3 +56,5 @@ volumes:
 networks:
   musost-network:
     driver: bridge
+  web-proxy:
+    external: true

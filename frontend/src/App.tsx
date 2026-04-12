@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -19,41 +19,72 @@ type Person = {
 
 const nodeTypes = { person: PersonNode }
 
-function layoutTree(persons: Person[]) {
-  const childrenMap = new Map<number | null, Person[]>()
+const INITIAL_DEPTH = 3
+const NODE_WIDTH = 140
+const NODE_HEIGHT = 50
+const H_GAP = 16
+const V_GAP = 70
+
+function makeChildrenMap(persons: Person[]) {
+  const map = new Map<number | null, Person[]>()
   for (const p of persons) {
-    const key = p.parent_id
-    if (!childrenMap.has(key)) childrenMap.set(key, [])
-    childrenMap.get(key)!.push(p)
+    if (!map.has(p.parent_id)) map.set(p.parent_id, [])
+    map.get(p.parent_id)!.push(p)
   }
+  return map
+}
 
-  const nodes: Node[] = []
-  const edges: Edge[] = []
-  const nodeWidth = 120
-  const nodeHeight = 60
-  const horizontalGap = 20
-  const verticalGap = 80
+function computeInitialCollapsed(childrenMap: Map<number | null, Person[]>) {
+  const toCollapse = new Set<number>()
+  function walk(id: number, depth: number) {
+    const children = childrenMap.get(id) || []
+    if (children.length > 0 && depth >= INITIAL_DEPTH) {
+      toCollapse.add(id)
+    }
+    for (const child of children) {
+      walk(child.id, depth + 1)
+    }
+  }
+  const roots = childrenMap.get(null) || []
+  for (const root of roots) walk(root.id, 0)
+  return toCollapse
+}
 
+function buildLayout(
+  persons: Person[],
+  childrenMap: Map<number | null, Person[]>,
+  collapsedSet: Set<number>,
+) {
+  const layoutNodes: Node[] = []
+  const layoutEdges: Edge[] = []
   let xCounter = 0
 
   function traverse(personId: number, depth: number): { minX: number; maxX: number } {
-    const children = childrenMap.get(personId) || []
     const person = persons.find(p => p.id === personId)!
+    const children = childrenMap.get(personId) || []
+    const isCollapsed = collapsedSet.has(personId)
+    const visibleChildren = isCollapsed ? [] : children
 
-    if (children.length === 0) {
-      const x = xCounter * (nodeWidth + horizontalGap)
+    if (visibleChildren.length === 0) {
+      const x = xCounter * (NODE_WIDTH + H_GAP)
       xCounter++
-      nodes.push({
+      layoutNodes.push({
         id: String(personId),
         type: 'person',
-        position: { x, y: depth * (nodeHeight + verticalGap) },
-        data: { label: person.name, personId: person.id },
+        position: { x, y: depth * (NODE_HEIGHT + V_GAP) },
+        data: {
+          label: person.name,
+          personId: person.id,
+          childrenCount: children.length,
+          collapsed: isCollapsed,
+          onToggle: () => {},
+        },
       })
       return { minX: x, maxX: x }
     }
 
-    const ranges = children.map(child => {
-      edges.push({
+    const ranges = visibleChildren.map(child => {
+      layoutEdges.push({
         id: `e${personId}-${child.id}`,
         source: String(personId),
         target: String(child.id),
@@ -65,22 +96,26 @@ function layoutTree(persons: Person[]) {
     const maxX = Math.max(...ranges.map(r => r.maxX))
     const x = (minX + maxX) / 2
 
-    nodes.push({
+    layoutNodes.push({
       id: String(personId),
       type: 'person',
-      position: { x, y: depth * (nodeHeight + verticalGap) },
-      data: { label: person.name, personId: person.id },
+      position: { x, y: depth * (NODE_HEIGHT + V_GAP) },
+      data: {
+        label: person.name,
+        personId: person.id,
+        childrenCount: children.length,
+        collapsed: isCollapsed,
+        onToggle: () => {},
+      },
     })
 
     return { minX, maxX }
   }
 
   const roots = childrenMap.get(null) || []
-  for (const root of roots) {
-    traverse(root.id, 0)
-  }
+  for (const root of roots) traverse(root.id, 0)
 
-  return { nodes, edges }
+  return { nodes: layoutNodes, edges: layoutEdges }
 }
 
 export default function App() {
@@ -90,21 +125,56 @@ export default function App() {
   const [persons, setPersons] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
 
+  const personsRef = useRef<Person[]>([])
+  const childrenMapRef = useRef<Map<number | null, Person[]>>(new Map())
+  const collapsedRef = useRef<Set<number>>(new Set())
+
+  const rebuildTree = useCallback(
+    (collapsedSet: Set<number>) => {
+      collapsedRef.current = collapsedSet
+      const { nodes: n, edges: e } = buildLayout(
+        personsRef.current,
+        childrenMapRef.current,
+        collapsedSet,
+      )
+      // Inject toggle handler
+      const withToggle = n.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onToggle: (id: number) => {
+            const next = new Set(collapsedRef.current)
+            if (next.has(id)) {
+              next.delete(id)
+            } else {
+              next.add(id)
+            }
+            rebuildTree(next)
+          },
+        },
+      }))
+      setNodes(withToggle)
+      setEdges(e)
+    },
+    [setNodes, setEdges],
+  )
+
   useEffect(() => {
     fetch('/api/persons')
       .then(res => res.json())
       .then((data: Person[]) => {
+        personsRef.current = data
+        childrenMapRef.current = makeChildrenMap(data)
+        const initial = computeInitialCollapsed(childrenMapRef.current)
         setPersons(data)
-        const { nodes: n, edges: e } = layoutTree(data)
-        setNodes(n)
-        setEdges(e)
         setLoading(false)
+        rebuildTree(initial)
       })
       .catch(err => {
         console.error('Failed to load persons:', err)
         setLoading(false)
       })
-  }, [setNodes, setEdges])
+  }, [rebuildTree])
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -114,7 +184,7 @@ export default function App() {
     [persons],
   )
 
-  if (loading) return <div className="loading">Loading tree...</div>
+  if (loading) return <div className="loading">Loading...</div>
 
   const parent = selectedPerson?.parent_id
     ? persons.find(p => p.id === selectedPerson.parent_id)
@@ -127,7 +197,7 @@ export default function App() {
     <div className="app-container">
       <div className="header">
         <h1>Musost</h1>
-        <span>Genealogical Tree</span>
+        <span>{persons.length} people</span>
       </div>
       <div className="tree-container">
         <ReactFlow
@@ -138,11 +208,13 @@ export default function App() {
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          minZoom={0.1}
-          maxZoom={2}
+          fitViewOptions={{ padding: 0.3 }}
+          minZoom={0.2}
+          maxZoom={3}
+          proOptions={{ hideAttribution: true }}
         >
           <Background />
-          <Controls />
+          <Controls showInteractive={false} />
         </ReactFlow>
       </div>
       {selectedPerson && (
@@ -151,20 +223,33 @@ export default function App() {
             x
           </button>
           <h2>{selectedPerson.name}</h2>
-          <div className="info-row">
-            <span className="label">ID</span>
-            <span>{selectedPerson.id}</span>
-          </div>
           {parent && (
             <div className="info-row">
-              <span className="label">Father</span>
-              <span>{parent.name}</span>
+              <span className="label">Отец</span>
+              <span
+                className="link"
+                onClick={() => setSelectedPerson(parent)}
+              >
+                {parent.name}
+              </span>
             </div>
           )}
-          <div className="info-row">
-            <span className="label">Children</span>
-            <span>{children.length > 0 ? children.map(c => c.name).join(', ') : '-'}</span>
-          </div>
+          {children.length > 0 && (
+            <div className="info-row children-list">
+              <span className="label">Дети ({children.length})</span>
+              <div className="children-names">
+                {children.map(c => (
+                  <span
+                    key={c.id}
+                    className="link"
+                    onClick={() => setSelectedPerson(c)}
+                  >
+                    {c.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

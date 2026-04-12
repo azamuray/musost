@@ -1,0 +1,134 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.app-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 12px 24px;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e94560;
+}
+
+.header span {
+  font-size: 14px;
+  color: #8899aa;
+}
+
+.tree-container {
+  flex: 1;
+  width: 100%;
+}
+
+.person-node {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #16213e;
+  border: 2px solid #0f3460;
+  color: #e0e0e0;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.person-node:hover {
+  border-color: #e94560;
+  background: #1a2744;
+}
+
+.person-node.selected {
+  border-color: #e94560;
+  background: #2a1525;
+}
+
+.person-node .person-id {
+  font-size: 10px;
+  color: #667;
+  margin-top: 2px;
+}
+
+.person-panel {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  width: 280px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 20px;
+  z-index: 10;
+}
+
+.person-panel h2 {
+  font-size: 18px;
+  color: #e94560;
+  margin-bottom: 12px;
+}
+
+.person-panel .info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #0f3460;
+  font-size: 14px;
+}
+
+.person-panel .info-row .label {
+  color: #8899aa;
+}
+
+.person-panel .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #8899aa;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.person-panel .close-btn:hover {
+  color: #e94560;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 18px;
+  color: #8899aa;
+}
+
+.react-flow__edge-path {
+  stroke: #0f3460 !important;
+  stroke-width: 2px !important;
+}

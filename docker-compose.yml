@@ -1,0 +1,53 @@
+services:
+  backend:
+    build: ./backend
+    container_name: musost-backend
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - POSTGRES_USER=musost
+      - POSTGRES_PASSWORD=musost
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=musost
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - musost-network
+
+  frontend:
+    build: ./frontend
+    container_name: musost-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - musost-network
+
+  db:
+    image: postgres:15
+    container_name: musost-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=musost
+      - POSTGRES_PASSWORD=musost
+      - POSTGRES_DB=musost
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U musost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - musost-network
+
+volumes:
+  postgres_data:
+
+networks:
+  musost-network:
+    driver: bridge

@@ -50,6 +50,15 @@ function computeInitialCollapsed(childrenMap: Map<number | null, Person[]>) {
   return toCollapse
 }
 
+function countDescendants(id: number, childrenMap: Map<number | null, Person[]>): number {
+  const children = childrenMap.get(id) || []
+  let count = children.length
+  for (const child of children) {
+    count += countDescendants(child.id, childrenMap)
+  }
+  return count
+}
+
 function buildLayout(
   persons: Person[],
   childrenMap: Map<number | null, Person[]>,
@@ -75,7 +84,7 @@ function buildLayout(
         data: {
           label: person.name,
           personId: person.id,
-          childrenCount: children.length,
+          childrenCount: countDescendants(personId, childrenMap),
           collapsed: isCollapsed,
           onToggle: () => {},
         },
@@ -103,7 +112,7 @@ function buildLayout(
       data: {
         label: person.name,
         personId: person.id,
-        childrenCount: children.length,
+        childrenCount: countDescendants(personId, childrenMap),
         collapsed: isCollapsed,
         onToggle: () => {},
       },
@@ -207,6 +216,7 @@ export default function App() {
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
+          nodesDraggable={false}
           fitView
           fitViewOptions={{ padding: 0.3 }}
           minZoom={0.2}

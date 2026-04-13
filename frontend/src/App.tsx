@@ -135,13 +135,13 @@ export default function App() {
   const [persons, setPersons] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
 
-  const { fitView } = useReactFlow()
+  const { setCenter, getZoom } = useReactFlow()
   const personsRef = useRef<Person[]>([])
   const childrenMapRef = useRef<Map<number | null, Person[]>>(new Map())
   const collapsedRef = useRef<Set<number>>(new Set())
 
   const rebuildTree = useCallback(
-    (collapsedSet: Set<number>) => {
+    (collapsedSet: Set<number>, focusNodeId?: number) => {
       collapsedRef.current = collapsedSet
       const { nodes: n, edges: e } = buildLayout(
         personsRef.current,
@@ -160,17 +160,26 @@ export default function App() {
             } else {
               next.add(id)
             }
-            rebuildTree(next)
+            rebuildTree(next, id)
           },
         },
       }))
       setNodes(withToggle)
       setEdges(e)
-      requestAnimationFrame(() => {
-        fitView({ padding: 0.3, duration: 300 })
-      })
+      if (focusNodeId !== undefined) {
+        const target = withToggle.find(nd => nd.id === String(focusNodeId))
+        if (target) {
+          requestAnimationFrame(() => {
+            setCenter(
+              target.position.x + NODE_WIDTH / 2,
+              target.position.y + NODE_HEIGHT / 2,
+              { zoom: getZoom(), duration: 300 },
+            )
+          })
+        }
+      }
     },
-    [setNodes, setEdges, fitView],
+    [setNodes, setEdges, setCenter, getZoom],
   )
 
   useEffect(() => {

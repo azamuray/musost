@@ -215,7 +215,7 @@ html, body, #root {
 }
 
 .react-flow__controls {
-  bottom: 52px !important;
+  bottom: 54px !important;
   left: 16px !important;
 }
 
@@ -225,6 +225,7 @@ html, body, #root {
   background: #16213e !important;
   border-color: #0f3460 !important;
   color: #8899aa !important;
+  margin-bottom: 2px !important;
 }
 
 .react-flow__controls button:hover {
@@ -239,9 +240,9 @@ html, body, #root {
 .expand-all-btn {
   position: absolute;
   bottom: 16px;
-  left: 16px;
-  width: 28px;
-  height: 28px;
+  left: 20px;
+  width: 36px;
+  height: 36px;
   background: #16213e;
   border: 1px solid #0f3460;
   border-radius: 4px;

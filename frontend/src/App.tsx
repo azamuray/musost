@@ -10,8 +10,9 @@ import {
   type Edge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { TreeDeciduous } from 'lucide-react'
+import { TreeDeciduous, Plus, Pencil, Trash2 } from 'lucide-react'
 import PersonNode from './components/PersonNode'
+import ActionModal from './components/ActionModal'
 
 type Person = {
   id: number
@@ -135,12 +136,18 @@ export default function App() {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
   const [persons, setPersons] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
+  const [modal, setModal] = useState<{ action: 'add' | 'edit' | 'delete'; personId: number; personName: string; parentId: number | null } | null>(null)
 
   const { setCenter, getZoom, fitView } = useReactFlow()
   const personsRef = useRef<Person[]>([])
   const childrenMapRef = useRef<Map<number | null, Person[]>>(new Map())
   const collapsedRef = useRef<Set<number>>(new Set())
   const [isExpanded, setIsExpanded] = useState(false)
+
+  const handleLongPress = useCallback((id: number) => {
+    const person = personsRef.current.find(p => p.id === id)
+    if (person) setSelectedPerson(person)
+  }, [])
 
   const rebuildTree = useCallback(
     (collapsedSet: Set<number>, focusNodeId?: number) => {
@@ -150,11 +157,12 @@ export default function App() {
         childrenMapRef.current,
         collapsedSet,
       )
-      // Inject toggle handler
+      // Inject toggle and long-press handlers
       const withToggle = n.map(node => ({
         ...node,
         data: {
           ...node.data,
+          onLongPress: handleLongPress,
           onToggle: (id: number) => {
             const next = new Set(collapsedRef.current)
             if (next.has(id)) {
@@ -182,17 +190,17 @@ export default function App() {
       if (focusNodeId !== undefined) {
         const target = withToggle.find(nd => nd.id === String(focusNodeId))
         if (target) {
-          requestAnimationFrame(() => {
+          setTimeout(() => {
             setCenter(
               target.position.x + NODE_WIDTH / 2,
               target.position.y + NODE_HEIGHT / 2,
-              { zoom: getZoom(), duration: 300 },
+              { zoom: getZoom(), duration: 200 },
             )
-          })
+          }, 50)
         }
       }
     },
-    [setNodes, setEdges, setCenter, getZoom],
+    [setNodes, setEdges, setCenter, getZoom, handleLongPress],
   )
 
   useEffect(() => {
@@ -212,6 +220,29 @@ export default function App() {
       })
   }, [rebuildTree])
 
+  const reloadData = useCallback(() => {
+    return fetch('/api/persons')
+      .then(res => res.json())
+      .then((data: Person[]) => {
+        personsRef.current = data
+        childrenMapRef.current = makeChildrenMap(data)
+        setPersons(data)
+        rebuildTree(collapsedRef.current)
+        return data
+      })
+  }, [rebuildTree])
+
+  const handleActionSuccess = useCallback((action: 'add' | 'edit' | 'delete', parentId?: number | null) => {
+    setModal(null)
+    setSelectedPerson(null)
+    reloadData().then((data) => {
+      if (action === 'delete' && parentId && data) {
+        const parent = data.find((p: Person) => p.id === parentId)
+        if (parent) setSelectedPerson(parent)
+      }
+    })
+  }, [reloadData])
+
   const toggleExpandAll = useCallback(() => {
     if (isExpanded) {
       const initial = computeInitialCollapsed(childrenMapRef.current)
@@ -223,14 +254,6 @@ export default function App() {
     }
     setIsExpanded(!isExpanded)
   }, [isExpanded, rebuildTree, fitView])
-
-  const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
-      const person = persons.find(p => p.id === Number(node.id))
-      setSelectedPerson(person || null)
-    },
-    [persons],
-  )
 
   if (loading) return <div className="loading">Loading...</div>
 
@@ -256,7 +279,6 @@ export default function App() {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           nodesDraggable={false}
           fitView
@@ -295,6 +317,29 @@ export default function App() {
             x
           </button>
           <h2>{selectedPerson.name}</h2>
+          <div className="action-buttons">
+            <button
+              className="action-btn"
+              title="Добавить потомка"
+              onClick={() => setModal({ action: 'add', personId: selectedPerson.id, personName: selectedPerson.name, parentId: selectedPerson.parent_id })}
+            >
+              <Plus size={16} />
+            </button>
+            <button
+              className="action-btn"
+              title="Изменить имя"
+              onClick={() => setModal({ action: 'edit', personId: selectedPerson.id, personName: selectedPerson.name, parentId: selectedPerson.parent_id })}
+            >
+              <Pencil size={16} />
+            </button>
+            <button
+              className="action-btn action-btn-danger"
+              title="Удалить"
+              onClick={() => setModal({ action: 'delete', personId: selectedPerson.id, personName: selectedPerson.name, parentId: selectedPerson.parent_id })}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
           {parent && (
             <div className="info-row">
               <span className="label">Отец</span>
@@ -323,6 +368,16 @@ export default function App() {
             </div>
           )}
         </div>
+      )}
+      {modal && (
+        <ActionModal
+          action={modal.action}
+          personName={modal.personName}
+          personId={modal.personId}
+          parentId={modal.parentId}
+          onClose={() => setModal(null)}
+          onSuccess={handleActionSuccess}
+        />
       )}
     </div>
   )

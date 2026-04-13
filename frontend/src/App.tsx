@@ -244,7 +244,7 @@ export default function App() {
     <div className="app-container">
       <div className="header">
         <h1>Musost</h1>
-        <span>{persons.length} people</span>
+        <span>{persons.length} стаг</span>
       </div>
       <div className="tree-container">
         <ReactFlow

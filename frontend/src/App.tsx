@@ -5,6 +5,7 @@ import {
   Controls,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Node,
   type Edge,
 } from '@xyflow/react'
@@ -134,6 +135,7 @@ export default function App() {
   const [persons, setPersons] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
 
+  const { fitView } = useReactFlow()
   const personsRef = useRef<Person[]>([])
   const childrenMapRef = useRef<Map<number | null, Person[]>>(new Map())
   const collapsedRef = useRef<Set<number>>(new Set())
@@ -164,8 +166,11 @@ export default function App() {
       }))
       setNodes(withToggle)
       setEdges(e)
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.3, duration: 300 })
+      })
     },
-    [setNodes, setEdges],
+    [setNodes, setEdges, fitView],
   )
 
   useEffect(() => {

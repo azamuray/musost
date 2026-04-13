@@ -135,10 +135,11 @@ export default function App() {
   const [persons, setPersons] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
 
-  const { setCenter, getZoom } = useReactFlow()
+  const { setCenter, getZoom, fitView } = useReactFlow()
   const personsRef = useRef<Person[]>([])
   const childrenMapRef = useRef<Map<number | null, Person[]>>(new Map())
   const collapsedRef = useRef<Set<number>>(new Set())
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const rebuildTree = useCallback(
     (collapsedSet: Set<number>, focusNodeId?: number) => {
@@ -210,6 +211,18 @@ export default function App() {
       })
   }, [rebuildTree])
 
+  const toggleExpandAll = useCallback(() => {
+    if (isExpanded) {
+      const initial = computeInitialCollapsed(childrenMapRef.current)
+      rebuildTree(initial)
+      requestAnimationFrame(() => fitView({ padding: 0.3, duration: 300 }))
+    } else {
+      rebuildTree(new Set())
+      requestAnimationFrame(() => fitView({ padding: 0.3, duration: 300 }))
+    }
+    setIsExpanded(!isExpanded)
+  }, [isExpanded, rebuildTree, fitView])
+
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       const person = persons.find(p => p.id === Number(node.id))
@@ -251,6 +264,13 @@ export default function App() {
           <Background />
           <Controls showInteractive={false} />
         </ReactFlow>
+        <button
+          className="expand-all-btn"
+          onClick={toggleExpandAll}
+          title={isExpanded ? 'Свернуть дерево' : 'Раскрыть всё дерево'}
+        >
+          {isExpanded ? '−' : '+'}
+        </button>
       </div>
       {selectedPerson && (
         <div className="person-panel">

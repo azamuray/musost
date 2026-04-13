@@ -35,10 +35,16 @@ html, body, #root {
   padding-top: max(12px, env(safe-area-inset-top));
 }
 
-.header h1 {
+.header .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header .logo-text {
   font-size: 18px;
   font-weight: 700;
-  color: #e94560;
+  color: #4ecca3;
 }
 
 .header span {
@@ -83,12 +89,12 @@ html, body, #root {
 
 .person-node:hover,
 .person-node:active {
-  border-color: #e94560;
+  border-color: #4ecca3;
   background: #1a2744;
 }
 
 .person-node.collapsed {
-  border-color: #e94560;
+  border-color: #4ecca3;
   border-style: dashed;
   background: #1e1535;
 }
@@ -100,8 +106,8 @@ html, body, #root {
 
 .person-badge {
   font-size: 10px;
-  color: #e94560;
-  background: rgba(233, 69, 96, 0.15);
+  color: #4ecca3;
+  background: rgba(78, 204, 163, 0.15);
   padding: 1px 6px;
   border-radius: 8px;
   font-weight: 600;
@@ -131,7 +137,7 @@ html, body, #root {
 
 .person-panel h2 {
   font-size: 20px;
-  color: #e94560;
+  color: #4ecca3;
   margin-bottom: 12px;
   padding-right: 40px;
 }

@@ -10,6 +10,7 @@ import {
   type Edge,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { TreeDeciduous } from 'lucide-react'
 import PersonNode from './components/PersonNode'
 
 type Person = {
@@ -243,7 +244,10 @@ export default function App() {
   return (
     <div className="app-container">
       <div className="header">
-        <h1>Musost</h1>
+        <div className="logo">
+          <TreeDeciduous size={24} color="#4ecca3" />
+          <span className="logo-text">Тайпан дитт</span>
+        </div>
         <span>{persons.length} стаг</span>
       </div>
       <div className="tree-container">

@@ -262,27 +262,28 @@ export default function App() {
           proOptions={{ hideAttribution: true }}
         >
           <Background />
-          <Controls showInteractive={false} />
+          <Controls showInteractive={false}>
+            <button
+              className="expand-all-btn"
+              onClick={toggleExpandAll}
+              title={isExpanded ? 'Свернуть дерево' : 'Раскрыть всё дерево'}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                {isExpanded ? (
+                  <>
+                    <path d="M4 10L8 6L12 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4 14L8 10L12 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </>
+                ) : (
+                  <>
+                    <path d="M4 2L8 6L12 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </>
+                )}
+              </svg>
+            </button>
+          </Controls>
         </ReactFlow>
-        <button
-          className="expand-all-btn"
-          onClick={toggleExpandAll}
-          title={isExpanded ? 'Свернуть дерево' : 'Раскрыть всё дерево'}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            {isExpanded ? (
-              <>
-                <path d="M4 10L8 6L12 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M4 14L8 10L12 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </>
-            ) : (
-              <>
-                <path d="M4 2L8 6L12 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </>
-            )}
-          </svg>
-        </button>
       </div>
       {selectedPerson && (
         <div className="person-panel">

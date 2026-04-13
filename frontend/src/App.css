@@ -215,7 +215,7 @@ html, body, #root {
 }
 
 .react-flow__controls {
-  bottom: 54px !important;
+  bottom: 16px !important;
   left: 16px !important;
 }
 
@@ -236,32 +236,29 @@ html, body, #root {
   fill: #8899aa !important;
 }
 
-/* Expand/Collapse all button — positioned under ReactFlow controls */
+/* Expand/Collapse all button — inside Controls panel */
 .expand-all-btn {
-  position: absolute;
-  bottom: 16px;
-  left: 20px;
-  width: 36px;
-  height: 36px;
-  background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 4px;
-  color: #8899aa;
+  width: 36px !important;
+  height: 36px !important;
+  background: #16213e !important;
+  border: 1px solid #0f3460 !important;
+  border-radius: 0 !important;
+  color: #8899aa !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
   transition: background 0.15s;
   padding: 0;
+  margin-bottom: 0 !important;
 }
 
 .expand-all-btn:hover {
-  background: #1a2744;
+  background: #1a2744 !important;
 }
 
 .expand-all-btn:active {
-  background: #1e2f50;
+  background: #1e2f50 !important;
 }
 
 /* Desktop adjustments */

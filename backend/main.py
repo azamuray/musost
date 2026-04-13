@@ -36,6 +36,9 @@ def on_startup():
     db = next(get_db())
     try:
         seed_from_json(db)
+        # Sync sequence with actual max id to prevent duplicate key errors
+        db.execute(text("SELECT setval('person_id_seq', COALESCE((SELECT MAX(id) FROM person), 1))"))
+        db.commit()
     finally:
         db.close()
 

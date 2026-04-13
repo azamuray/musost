@@ -159,6 +159,17 @@ export default function App() {
               next.delete(id)
             } else {
               next.add(id)
+              // Collapse all descendants so they don't stay open
+              const collapseDescendants = (parentId: number) => {
+                const ch = childrenMapRef.current.get(parentId) || []
+                for (const child of ch) {
+                  if ((childrenMapRef.current.get(child.id) || []).length > 0) {
+                    next.add(child.id)
+                  }
+                  collapseDescendants(child.id)
+                }
+              }
+              collapseDescendants(id)
             }
             rebuildTree(next, id)
           },
